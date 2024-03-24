@@ -1,0 +1,175 @@
+#### BASIC SETTING ####
+IsReadScenario 0	# 0 if creat new random scenario, 1 if read from file
+ReadScenarioName './TestScenario'	# file name for saved scenario to read. Will not be used if IsReadScenario == False
+IsWriteScenario 1		# 0 if do not save scenario, 1 if save
+WriteScenarioName './TestScenario'	# file name for save current scenario. Will not be used if IsWriteScenario == False
+
+#### SCENARIO SETTING ####
+GraphType 'Connected_ER'
+#GraphType 'GEANT'		# graph type. Certain types will overwrite N. Available graph type: 
+				# Connected_ER: a fully-connected Erdos-Renyi graph 
+				# Linear: linearly connected N nodes
+				# Tree: A complete tree, degree is specified in the code 
+				# Fog: Fog network, cf. Khashayar Rate Allocation
+				# grid: 2d grid network, will round N to squre number
+				# LHC, GEANT, Dtelekom, Small-World
+
+p_ER 0.07	# probability of Erdos-renyi edge
+deg_TREE 3	# degree of tree topology
+
+N 5 	# number of nodes
+
+A 5			# number of applications, each consist of a chain of services
+Len 1			# max length of a chain. Set to 0 if no computation is involved
+LenType 'Max'
+#LenType 'Random'		# If Max, every chain is set to Len. If Random, chain length is u.a.r. from 0 to Len			
+
+
+LinkCostType 'Linear'
+#LinkCostType 'Quadratic'
+#LinkCostType 'Taylor'
+#LinkCostType 'Queue'	# link cost type. 
+			# 'Linear' for linear cost, 
+			# 'Queue' for queueing delay 
+			# 'Quadratic': quadratic Dij = w Fij^2 + w F_ij
+			# 'Taylor': 3-order taylor expansion of queueing delay at F=0, to prevent infinity cost. The link para d_ij = 1/c_ij.
+
+LinkParaMin 10		# LinkPara is the parameter for link cost. For linear, is the weight. For queue, is the capacity
+LinkParaMax 10
+
+CompCostType 'Linear'		# computation cost type. CompCost is assigned separately for each node
+#CompCostType 'Queue'
+
+CompParaMin 5			# parameter for computation costs
+CompParaMax 5
+
+WorkloadMin 1			# computation workload (uniform), assigned for each stage (app, task#)
+WorkloadMax 1
+
+#CacheCostType 'Capacity'		# cache cost calculation
+CacheCostType 'Linear'
+#CacheCostType 'Quadratic'
+				# 'Quadratic' for c = wy^2 + wy
+				# 'Linear' for c = wy. 
+				# 'Capacity' for a smooth approximation of hard cache capacity
+
+CacheParaMin 5.0		# CachePara is the parameter for cache cost.
+#CacheParaMin 100.0
+CacheParaMax 10.0
+#CacheParaMax 150.01
+
+K 10			# number of items
+ServerDistribution 'Uniform'	# the distribution of designated servers (assume each item has one server). 
+			# 'Single' means all items have a same server (node 0), 
+			# 'Uniform' for uniformly distributed server. 
+
+ItemSizeType 'Uniform'	# distribution of content item size. 'Uniform'
+ItemSizeMin 1.0		# parameter for content size distribution
+ItemSizeMax 1.0
+StageShrink 0.5		# packet size shrink factor. e.g., stage 0 packets has size 1, then stage 1 packets has size (StageShrink)
+
+R 5	# number of demands (requests)
+RequetserDistribution 'Uniform'	# the disrtibution of requester. 'Uniform'
+RequesterDistPara 1.0		# parameter for requester distribution
+ItemDistribution 'Zipf'		# the distribution of requested item. 'Uniform' or 'Zipf'
+ItemDistPara 1.0			# parameter for item distribution
+AppDistribution 'Uniform'		# distribution of requested application upon the items
+AppDistPara 1.0			# parameter for application distibution
+IntermediateRequest False		# Does the network generate requests for intermediate results? 
+				# True: demands for each application are uniformly distributed across all stages
+				# False: demands for each application are only made for the final result
+RateMin 1.0			# range of request rates. Request rates are uniformly distribution in [RateMin,RateMax]
+RateMax 1.0
+
+#### SIMULATION SETTING ####
+T_sim 1000.0	# total simulation time
+T_slot 10.0		# duration of a single time slot, caching decision will be rounded and maintained in this slot
+L_update 2		# number of slots between two update slot. If =1, every slot is an update slot
+T_monitor 100.0		# length of cost evaluation average window. The number of packages during this window is averaged as flow, solely used to calculate cost
+Is_draw_network False	# if True, at every monitor time, draw a figure of network demostrating link flow and cache sizes
+
+MonitorInitTime 0.0		# time that initializing monitor process. Should wait for convergence before start monitoring
+T_IDReset inf		# time that the request ID number is reset (Each request msg is given an ID number to be distingushed when dealing with responses)
+T_extension 200.0		# time that network runs after T_sim. Used to wait for un-satisfied requests due to msg delay. Requests will not be generated.
+
+RequestGenerateType 'Poisson'	# how the requests are generated. 'Poisson' for poisson process, 'Uniform' for uniform process with interval 1/rate
+RequestDelayType 'Deterministic'	# delay type of request messages. 'Deterministic' or 'Exponential'
+RequestDelay 0.0			# average request delay
+RequestSize 0.0			# size of request message
+
+ResponseDelayType 'Deterministic'	# delay type of response messages. 'Deterministic' or 'Exponential'
+ResponseDelay 0.0			# average response delay
+#ResponseSize 1.0			# NOTE: in CacheComputeNetwork, respond size is specified by PacketSize attribute
+
+ControlDelay 0.0			# delay of control messages (deterministic)
+ControlSize 0.0			# size of contorl msg
+
+#### ALGORITHM SETTING ####
+#CacheAlgo 'LRU'
+#CacheAlgo 'LFU'
+#CacheAlgo 'Greedy'
+#CacheAlgo 'CostGreedy'
+#CacheAlgo 'AC-R'
+#CacheAlgo 'AC-N'
+#CacheAlgo 'MinDelay'
+#CacheAlgo 'GCFW'
+CacheAlgo 'GP'		# Cache algorithm.
+			# 'Zero': No cache at all
+			# 'GP': gradient projection as in Elastic Cache Networks
+			# 'GCFW': gradient-combined Frank-Wolfe, the proposed algorithm for fixed-routing special case. Note that using this method, the topology should be set to 'Tree'
+			# 'Continuous-Greedy': Continuous greedy algorithm for fixed-routing and fixed-cachesize, given in Kelly Cache Networks
+			# 'Greedy': Greedy in Kelly Cache Networks
+			# 'CostGreedy': Greedy Min Cost Item , for each slot, find the (node,item) pair with max aggregated miss cost, then add the node's cache size by 1, to cache the item
+			# 'AC-R': adaptive caching with source routing (Stratis)
+			# 'AC-N': adaptive caching with network-wide cache capacity constraint (Stratis)
+			# 'MinDelay': MinDelay joint caching and routing by Milad, essentially GP with fixed capacity constraint
+			# 'LMIN': Adaptive caching with global capacity constraint
+			# 'LRU','LFU','FIFO','RR'
+
+#RouteAlgo 'ShortestPath'
+#RouteAlgo 'AC-R'
+#RouteAlgo 'MinDelay'
+RouteAlgo 'GP'		# Routing alogirthm
+			# 'GP', 
+			# 'ShortestPath': one-time shortest path routing using the link cost at F=0. (link capacities are used, the same as initialization of GP)
+			# 'ShortestPath-iter': performing one-time shortest path routing every time slot
+			# 'AC-R' : 
+			# 'MinDelay': 
+
+#SizeAlgo 'Uniform'
+#SizeAlgo 'MaxHit'
+#SizeAlgo 'MinCost'
+#SizeAlgo 'CostGreedy'
+#SizeAlgo 'AC-N'
+#SizeAlgo 'GCFW'
+SizeAlgo 'GP'		# Cache size determining algorithm
+			# 'TEST': just for test
+			# 'Zero': cache size always = 0
+			# 'GP',
+			# 'GCFW',
+			# 'LMIN': LMIN cache with global constraint, and the global constraint is gradually increased from 0 until total cost no longer decrease
+			# 'Uniform': add cache size by 1 at all nodes each period, stop when the total cost wont decrease
+			# 'MaxHit': start from no cache. Graduately add caches to the node with highest cache miss counts
+			# 'MinCost': same as 'MaxHit' but weighted by a cache miss cost
+			# 'CostGreedy',
+			# 'AC-N': adaptive caching with network-wide capacity constraint. The constraint grows gradually from 0, until total cost stop decreasing
+
+
+StepsizeGP_phi 0.2	# stepsize of GP. Note that the stepsize for routing variable phi and for caching variable y are not the same
+StepsizeGP_y 0.02
+#Thrt 0.0
+Thrt 'Auto'		# throttle rate between routing and caching steps. If Thrt == 0, routing and caching are optimized separately. If Thrt == 1, the decreased_sum is equally distributed to all min-delta vars regardless of routing and caching
+			# Thrt can be in [0,1], or 'Auto' for Thrt = min(StepsizeGP_phi,StepsizeGP_y) / max(StepsizeGP_phi,StepsizeGP_y)		
+
+N_GCFW 150		# The parameter N used in GCFW, note that epsilon = N^(-3)
+
+RouteInitType 1		# How to initialize the routing variable.
+			# 1: shortest paths to a designated server under link capacity. Solving an LP subject to link capacity constraint, link weighted by marginal cost at F=0
+
+#AllowLoop True
+AllowLoop False		# if 1: allow the existence of loops in request paths. If 0: not allow loops, implement the blocked node sets.
+
+RouteType 'Random-Round'
+#RouteType 'Random'		# packet routing method.
+			# 'Random': random packet forwarding, according to probability \phi_ij(k)
+			# 'Random-Round': round phi_ij(k) to L_round sections. Randomly choose 1 section and forward, and delete that section, untill run off all section, then repeat. (This will guarantee a relatively stable link flow)
